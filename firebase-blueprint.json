@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Review": {
+      "title": "Client Review",
+      "description": "A verified user-submitted review with star rating and optional compressed image attachments.",
+      "type": "object",
+      "properties": {
+        "authorId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Authenticated Firebase UID of the reviewer."
+        },
+        "authorName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Display name of the reviewer."
+        },
+        "businessName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "description": "Optional business or venue name."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Star rating from 1 to 5."
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 1500,
+          "description": "Review text content."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "Up to 2 compressed image data URLs attached to the review."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["published"],
+          "description": "Publication status for secure public querying."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the review was submitted."
+        }
+      },
+      "required": ["authorId", "authorName", "rating", "comment", "imageUrls", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/Review"
+      },
+      "description": "Publicly readable client reviews submitted by authenticated users."
+    }
+  }
+}

@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable Hardened Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'md.tahmidbhuyan009@gmail.com';
+    }
+
+    function isValidImageItem(item) {
+      return item is string && item.size() <= 250000 && item.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['authorId', 'authorName', 'rating', 'comment', 'imageUrls', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['authorId', 'authorName', 'businessName', 'rating', 'comment', 'imageUrls', 'status', 'createdAt']) &&
+        data.authorId is string && data.authorId.size() <= 128 && data.authorId == request.auth.uid &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80 &&
+        (!('businessName' in data) || (data.businessName is string && data.businessName.size() <= 100)) &&
+        data.rating is int && data.rating >= 1 && data.rating <= 5 &&
+        data.comment is string && data.comment.size() >= 5 && data.comment.size() <= 1500 &&
+        data.imageUrls is list && data.imageUrls.size() <= 2 &&
+        (data.imageUrls.size() == 0 || isValidImageItem(data.imageUrls[0])) &&
+        (data.imageUrls.size() < 2 || isValidImageItem(data.imageUrls[1])) &&
+        data.status == 'published' &&
+        data.createdAt == request.time;
+    }
+
+    match /reviews/{reviewId} {
+      allow get: if isValidId(reviewId) && existing().status == 'published';
+      allow list: if existing().status == 'published';
+      allow create: if isVerifiedUser() && isValidId(reviewId) && isValidReview(incoming());
+      allow update: if false;
+      allow delete: if isValidId(reviewId) && (isAdmin() || (isVerifiedUser() && existing().authorId == request.auth.uid));
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ReviewKeystone",
+  "description": "Diagnostic consultancy that transforms negative Google reviews into prioritized fix plans for hotels, restaurants, clinics, salons, and venues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
